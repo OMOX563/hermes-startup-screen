@@ -1,0 +1,13 @@
+# 构建/测试临时文件
+__*.mjs
+__check.mjs
+
+# 编辑器与系统
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Python
+__pycache__/
+*.pyc
