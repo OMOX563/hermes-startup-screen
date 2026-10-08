@@ -49,10 +49,15 @@ if not m:
 defaults_block_original = m.group(0)
 defaults_block = m.group(0)
 
+# 身份编号：构建时随机生成 16 位十六进制哈希（每次重建都会换）
+import secrets as _secrets
+_RID = _secrets.token_hex(8)
+
 # 品牌适配：DeepSeek → Hermes（逐条 assert 1 次）
 branding = [
-    ("identity: 'JOYCE MOORE',", "identity: 'OPERATOR',"),
-    ("identityId: '0087',", "identityId: '',"),
+    ("identity: 'JOYCE MOORE',", "identity: 'OMOX',"),
+    ("accessLevel: '3',", "accessLevel: '0',"),
+    ("identityId: '0087',", "identityId: '%s'," % _RID),
     ("brand1: 'DEEPSEEK',", "brand1: 'HERMES',"),
     ("brand2: 'SYNTHESIZE INTELLIGENCE',", "brand2: 'AGENTIC INTELLIGENCE',"),
     ("brand3a: 'HARNESS',", "brand3a: 'DESKTOP',"),

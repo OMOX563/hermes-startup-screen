@@ -18,6 +18,8 @@ import {
   haptic,
   APPEARANCE_AREAS,
   PALETTE_AREA,
+  ROUTES_AREA,
+  SIDEBAR_NAV_AREA,
   ToggleRow,
   ListRow,
   SegmentedControl,
@@ -277,6 +279,19 @@ function Group({ title, children }) {
   return jsxs('div', { children: [
     jsx('div', { style: GROUP_LABEL, children: title }),
     jsx('div', { style: { display: 'flex', flexDirection: 'column' }, children: children })
+  ] })
+}
+
+/* ── 独立设置页（路由 /startup-animation，侧栏入口直达）──────────────────
+   官方 APPEARANCE_AREAS.extra 的挂载条件 subpage === undefined 在当前构建
+   不可达（resolveSettingsSubpage 恒返回子页 id），故配置面板改走 ROUTES_AREA。 */
+function SettingsPage() {
+  return jsxs('div', { style: { padding: '20px 24px 32px', maxWidth: 720 }, children: [
+    jsxs('div', { style: { marginBottom: 16 }, children: [
+      jsx('h1', { style: { fontSize: 18, fontWeight: 650, margin: '0 0 4px' }, children: '启动动画' }),
+      jsx('p', { style: { fontSize: 12.5, opacity: 0.65, margin: 0 }, children: '六幕开机序列：黑幕标识 → 过曝洗白 → 档案底板 → 五步授权 → 色散揭幕。' })
+    ] }),
+    jsx(AppearanceCard, {})
   ] })
 }
 
@@ -561,8 +576,8 @@ export default {
   name: '启动动画',
   description: '开机六幕启动动画：黑幕标识 → 过曝洗白 → 档案底板 → 五步授权 → 揭幕。',
   register(ctx) {
-    /* 加载自报家门：toast 出现 = 插件已成功加载并注册（验证信号） */
-    host.notify({ kind: 'info', message: '🚀 hermes-startup-screen 插件已加载' })
+    /* 加载自报家门：toast 出现 = 插件已成功加载并注册（验证信号 + 指路） */
+    host.notify({ kind: 'info', message: '🚀 启动动画插件已加载 · 设置入口：侧栏「启动动画」' })
     gCtx = ctx
 
     /* 设置卡片：Settings → Appearance 页尾 */
@@ -570,6 +585,34 @@ export default {
       id: 'appearance',
       area: APPEARANCE_AREAS.extra,
       render: () => jsx(AppearanceCard, {})
+    })
+
+    /* 设置页：独立路由整页（appearance.extra 在本构建不可达，改走这里） */
+    ctx.register({
+      id: 'page',
+      area: ROUTES_AREA,
+      data: { path: '/startup-animation', title: '启动动画' },
+      render: () => jsx(SettingsPage, {})
+    })
+
+    /* 侧栏入口：与路由页配对（同 kanban 的官方范式） */
+    ctx.register({
+      id: 'nav',
+      area: SIDEBAR_NAV_AREA,
+      order: 60,
+      data: { codicon: 'play', label: '启动动画', path: '/startup-animation' }
+    })
+
+    /* ⌘K 命令：打开设置 */
+    ctx.register({
+      id: 'open-settings',
+      area: PALETTE_AREA,
+      data: {
+        id: 'startup-screen.settings',
+        label: '启动动画：打开设置',
+        keywords: ['启动', '动画', '设置', 'startup', 'settings', 'splash'],
+        run: () => host.navigate('/startup-animation')
+      }
     })
 
     /* ⌘K 命令：立即播放 */

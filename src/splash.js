@@ -200,7 +200,7 @@
     out.speed = Math.min(3, Math.max(0.35, Number(out.speed) || 1))
     out.identity = String(out.identity || DEFAULTS.identity).slice(0, 48)
     /* 代号取身份名称里的字母数字；纯中文名字取不到时退回 OPERATOR */
-    out.identityId = String(out.identityId || out.identity).toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 12)
+    out.identityId = String(out.identityId || out.identity).toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 16)
     if (!out.identityId) out.identityId = 'OPERATOR'
     return out
   }

@@ -25,6 +25,8 @@ src = replaceOnce(src, 'import {', "} from '@hermes/plugin-sdk'",
   `const host = { notify() {}, navigate() {}, request() { return Promise.resolve(null) } }
 const haptic = () => {}
 const APPEARANCE_AREAS = { extra: 'appearance.extra' }
+const ROUTES_AREA = 'routes'
+const SIDEBAR_NAV_AREA = 'sidebar.nav'
 const PALETTE_AREA = 'palette'
 const ToggleRow = 'ToggleRow', ListRow = 'ListRow', SegmentedControl = 'SegmentedControl'
 const Input = 'Input', Button = 'Button'`)
@@ -49,7 +51,9 @@ globalThis.document = {
   getElementById: () => null,
   createElement: () => ({
     classList: { add() {}, remove() {}, toggle() {}, contains: () => false },
-    style: {}, setAttribute() {}, appendChild() {}, removeChild() {}
+    style: { setProperty() {}, removeProperty() {} },
+    setAttribute() {}, appendChild() {}, removeChild() {},
+    querySelector: () => null, querySelectorAll: () => []
   }),
   createElementNS: () => ({ setAttribute() {}, appendChild() {} }),
   head: { appendChild() {} },
@@ -67,10 +71,11 @@ try {
 
   // --- normalize 边界 ---
   const d = mod.normalize(null)
-  assert.equal(d.identity, 'OPERATOR', 'identity default')
-  assert.equal(d.identityId, 'OPERATOR', 'identityId derived from identity when empty')
+  assert.equal(d.identity, 'OMOX', 'identity default')
+  assert.match(d.identityId, /^[0-9a-f]{16}$/, 'identityId is a random 16-hex hash')
   assert.equal(d.brand1, 'HERMES', 'branding: brand1')
   assert.equal(d.orgZh, '赫尔墨斯', 'branding: orgZh')
+  assert.equal(d.accessLevel, '0', 'access level default')
   assert.equal(d.footer, 'POWERED BY NOUS RESEARCH', 'branding: footer')
   assert.equal(d.welcomeBox, 'HERMES DESKTOP', 'branding: welcomeBox')
   assert.equal(d.mode, 'session', 'mode default')
@@ -86,7 +91,7 @@ try {
   assert.equal(mod.normalize({ accent: '#00ff00' }).accent, '#00ff00', 'color valid kept')
   assert.equal(mod.normalize({ voiceRate: 5 }).voiceRate, 2, 'voiceRate clamp')
   assert.equal(mod.normalize({ orgZh: 'x'.repeat(100) }).orgZh.length, 64, 'text truncated')
-  assert.equal(mod.normalize({ identity: '  ' }).identity, 'OPERATOR', 'blank identity fallback')
+  assert.equal(mod.normalize({ identity: '  ' }).identity, 'OMOX', 'blank identity fallback')
 
   // --- shouldPlay 门控 ---
   const base = mod.normalize(null)
@@ -119,12 +124,21 @@ try {
   // register 内 play() 会因无 DOM 被 try/catch 吞掉——不应抛出
   mod.default.register(ctx)
   assert.equal(mod.default.id, 'hermes-startup-screen', 'plugin id')
-  assert.equal(contributions.length, 2, 'two contributions registered')
+  assert.equal(contributions.length, 5, 'five contributions registered')
   const areas = contributions.map((c) => c.area).sort()
-  assert.deepEqual(areas, ['appearance.extra', 'palette'], 'areas')
-  const palette = contributions.find((c) => c.area === 'palette')
+  assert.deepEqual(areas, ['appearance.extra', 'palette', 'palette', 'routes', 'sidebar.nav'], 'areas')
+  const route = contributions.find((c) => c.area === 'routes')
+  assert.equal(route.data.path, '/startup-animation', 'route path')
+  assert.equal(typeof route.render, 'function', 'route page render')
+  const nav = contributions.find((c) => c.area === 'sidebar.nav')
+  assert.equal(nav.data.path, '/startup-animation', 'sidebar nav pairs the route')
+  assert.equal(nav.data.label, '启动动画', 'sidebar nav label')
+  const palette = contributions.find((c) => c.area === 'palette' && c.id === 'replay')
   assert.equal(typeof palette.data.run, 'function', 'palette run is function')
-  assert.equal(palette.data.label, '启动动画：立即播放', 'palette label')
+  assert.equal(palette.data.label, '启动动画：立即播放', 'palette replay label')
+  const openSettings = contributions.find((c) => c.area === 'palette' && c.id === 'open-settings')
+  assert.equal(openSettings.data.label, '启动动画：打开设置', 'palette settings label')
+  assert.equal(typeof openSettings.data.run, 'function', 'palette settings run')
   const card = contributions.find((c) => c.area === 'appearance.extra')
   assert.equal(typeof card.render, 'function', 'appearance card render')
 
@@ -132,7 +146,7 @@ try {
   stored.set('config', { mode: 'daily', speed: 2, identity: 'TESTER' })
   contributions.length = 0
   mod.default.register(ctx)
-  assert.ok(contributions.length === 2, 're-register works')
+  assert.ok(contributions.length === 5, 're-register works')
 
   console.log('SMOKE OK — normalize/shouldPlay/register 全部断言通过')
 } finally {
