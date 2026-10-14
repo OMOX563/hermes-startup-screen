@@ -148,7 +148,26 @@ try {
   mod.default.register(ctx)
   assert.ok(contributions.length === 5, 're-register works')
 
-  console.log('SMOKE OK — normalize/shouldPlay/register 全部断言通过')
+  // --- 交互确认键必须在 capture 阶段拦 ---
+  // 回归防线：Enter/Space 曾只挂在 document 冒泡阶段，被聊天输入框的
+  // onKeyDown 吞掉（Enter 在 textarea 里是发送消息）→ 表现为「按回车没反应 /
+  // 要按很多次」，而 Space 恰好还能生效。钉住 capture + keyup 兜底 + NumpadEnter。
+  const runtime = src
+  assert.ok(
+    runtime.includes("document.addEventListener('keydown', onKey, true)"),
+    'confirm keys bound in capture phase (survives composer stopPropagation)')
+  assert.ok(
+    runtime.includes("document.addEventListener('keyup', onKeyUp, true)"),
+    'keyup fallback bound')
+  assert.ok(runtime.includes("e.key === 'NumpadEnter'"), 'numpad enter recognised')
+  assert.ok(
+    /addEventListener\('keydown', escHandler, true\)/.test(runtime),
+    'Esc skip also bound in capture phase')
+  assert.ok(
+    runtime.includes('stopPropagation'),
+    'handlers stop propagation so the composer never sees the confirm key')
+
+  console.log('SMOKE OK — normalize/shouldPlay/register/capture-keys 全部断言通过')
 } finally {
   fs.rmSync(tmp, { force: true })
 }

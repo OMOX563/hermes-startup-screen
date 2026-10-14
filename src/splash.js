@@ -567,21 +567,34 @@
         cleanup()
         resolve()
       }
-      function onKey(e) {
-        if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') { e.preventDefault(); fin() }
-      }
-      function onClick(e) { e.preventDefault(); fin() }
-      function cleanup() {
-        ui.btn.removeEventListener('click', onClick)
-        ui.action.removeEventListener('click', onClick)
-        document.removeEventListener('keydown', onKey)
-        var i = waiters.indexOf(fin)
-        if (i >= 0) waiters.splice(i, 1)
-      }
-      ui.btn.addEventListener('click', onClick)
-      ui.action.addEventListener('click', onClick)
-      document.addEventListener('keydown', onKey)
-      waiters.push(fin)
+      function isConfirmKey(e) {
+              return e.key === 'Enter' || e.key === 'NumpadEnter' || e.key === ' ' ||
+                e.key === 'Spacebar' || e.code === 'Space'
+            }
+            function onKey(e) {
+              if (!isConfirmKey(e)) return
+              // capture + stopPropagation：聊天输入框的 onKeyDown 会吞掉 Enter/Space
+              // （Enter 在 textarea 里是发送消息），冒泡到 document 就已经晚了。
+              e.preventDefault()
+              e.stopPropagation()
+              fin()
+            }
+            // keyup 兜底：极少数路径下 keydown 被宿主页吃掉，抬起时再确认一次
+            function onKeyUp(e) { if (isConfirmKey(e)) fin() }
+            function onClick(e) { e.preventDefault(); fin() }
+            function cleanup() {
+              ui.btn.removeEventListener('click', onClick)
+              ui.action.removeEventListener('click', onClick)
+              document.removeEventListener('keydown', onKey, true)
+              document.removeEventListener('keyup', onKeyUp, true)
+              var i = waiters.indexOf(fin)
+              if (i >= 0) waiters.splice(i, 1)
+            }
+            ui.btn.addEventListener('click', onClick)
+            ui.action.addEventListener('click', onClick)
+            document.addEventListener('keydown', onKey, true)
+            document.addEventListener('keyup', onKeyUp, true)
+            waiters.push(fin)
     })
   }
 

@@ -193,8 +193,10 @@ s = sub(s, old_inject, new_inject, 1, 'injectSelf')
 s = sub(s, '  var timers = []', '  var timers = []\n  var escHandler = null', 1, 'esc-decl')
 s = sub(s, '''    document.addEventListener('keydown', function (e) {
       if (e.key === 'Escape') requestSkip()
-    })''', """    escHandler = function (e) { if (e.key === 'Escape') requestSkip() }
-    document.addEventListener('keydown', escHandler)""",
+    })''', """    escHandler = function (e) {
+      if (e.key === 'Escape') { e.stopPropagation(); requestSkip() }
+    }
+    document.addEventListener('keydown', escHandler, true)""",
         1, 'esc-listen')
 s = sub(s, '''    releaseAll()
     stopHex()
@@ -202,7 +204,7 @@ s = sub(s, '''    releaseAll()
     stopHex()
     voice.stop()
     if (escHandler) {
-      document.removeEventListener('keydown', escHandler)
+      document.removeEventListener('keydown', escHandler, true)
       escHandler = null
     }''', 1, 'esc-cleanup')
 
