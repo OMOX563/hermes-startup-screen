@@ -113,8 +113,8 @@ html.dsu-lock,html.dsu-lock body{overflow:hidden!important}
 
 /* 深色主题：同一套版式，换成暗底板 */
 #hermes-startup-root.dsu-dark {
-  --dsu-bg: #0b0b0c;
-  --dsu-bg-2: #131315;
+  --dsu-bg: #000000;
+  --dsu-bg-2: #070708;
   --dsu-ink: #f2f1ee;
   --dsu-ink-soft: #cfcecb;
   --dsu-muted: #85847f;
@@ -153,7 +153,7 @@ html.dsu-lock,html.dsu-lock body{overflow:hidden!important}
 
 .dsu-dark .dsu-plate {
   background:
-    radial-gradient(120% 90% at 78% 12%, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0) 55%),
+    radial-gradient(120% 90% at 78% 12%, rgba(255, 255, 255, 0.028) 0%, rgba(255, 255, 255, 0) 55%),
     linear-gradient(168deg, var(--dsu-bg-2) 0%, var(--dsu-bg) 42%, var(--dsu-bg) 100%);
 }
 
@@ -182,6 +182,10 @@ html.dsu-lock,html.dsu-lock body{overflow:hidden!important}
   pointer-events: none;
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/></filter><rect width='120' height='120' filter='url(%23n)' opacity='0.6'/></svg>");
 }
+
+/* 暗色下噪点会整体提亮，压到一半 */
+.dsu-dark .dsu-grain { opacity: 0.026; }
+.dsu-dark.dsu-peak .dsu-grain { opacity: 0.055; }
 
 /* ── 第一幕：黑幕 + Hermes 标识 ──────────────────────────────────────── */
 .dsu-black {
@@ -745,7 +749,7 @@ html.dsu-lock,html.dsu-lock body{overflow:hidden!important}
 .dsu-dark .dsu-vignette {
   background:
     radial-gradient(122% 104% at 50% 42%, rgba(0, 0, 0, 0) 48%, rgba(0, 0, 0, 0.42) 100%),
-    radial-gradient(60% 40% at 50% 45%, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0) 100%);
+    radial-gradient(60% 40% at 50% 45%, rgba(255, 255, 255, 0.028) 0%, rgba(255, 255, 255, 0) 100%);
 }
 .dsu-vignette.dsu-in { opacity: 1; }
 
@@ -1192,7 +1196,7 @@ const DEFAULTS = {
     voiceSource: 'asset',       // asset=优先用真声素材 / tts=全部 TTS 合成
     voiceLead: 240,             // 提示音之后留一小段空白再开口
     identity: 'OMOX',    // ← 设置页可改的"身份名称"
-    identityId: 'c412052ec6134e0f',
+    identityId: 'ff3d486b728fbbbf',
     accessLevel: '0',
     brand1: 'HERMES',
     brand2: 'AGENTIC INTELLIGENCE',
