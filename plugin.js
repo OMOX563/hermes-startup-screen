@@ -41,7 +41,7 @@ const DAY_KEY = 'hermes-startup-screen:day'
 const DEFAULTS = {
     enabled: true,
     mode: 'session',            // always | session | daily
-    theme: 'light',             // light | dark
+    theme: 'auto',              // auto | light | dark（auto = 跟随系统）
     speed: 1,
     requireInteraction: true,   // 第 1、2 步等待用户确认
     allowSkip: true,
@@ -58,7 +58,7 @@ const DEFAULTS = {
     voiceSource: 'asset',       // asset=优先用真声素材 / tts=全部 TTS 合成
     voiceLead: 240,             // 提示音之后留一小段空白再开口
     identity: 'OMOX',    // ← 设置页可改的"身份名称"
-    identityId: 'e3701cdd6da8fb53',
+    identityId: 'c412052ec6134e0f',
     accessLevel: '0',
     brand1: 'HERMES',
     brand2: 'AGENTIC INTELLIGENCE',
@@ -82,7 +82,7 @@ const TEXT_KEYS = [
 const COLOR_KEYS = ['accent', 'glitchA', 'glitchB']
 const ENUMS = {
   mode: ['always', 'session', 'daily'],
-  theme: ['light', 'dark'],
+  theme: ['auto', 'light', 'dark'],
   voiceLang: ['en', 'zh', 'both'],
   sfx: ['audio', 'synth'],
   voiceSource: ['asset', 'tts']
@@ -359,7 +359,38 @@ function runSplash() {
     root.className = 'dsu-root'
     document.body.appendChild(root)
   }
-  root.classList.toggle('dsu-dark', C.theme === 'dark')
+  // ── 主题：auto 跟随系统，light/dark 锁定 ──
+  // 宿主渲染进程判断自身暗色用的就是 prefers-color-scheme，同源信号，
+  // 保证启动画面与应用外壳一致。
+  var osDarkQuery = (typeof window.matchMedia === 'function')
+    ? window.matchMedia('(prefers-color-scheme: dark)') : null
+  function wantsDark() {
+    if (C.theme === 'dark') return true
+    if (C.theme === 'light') return false
+    return !!(osDarkQuery && osDarkQuery.matches)
+  }
+  function applyTheme() { root.classList.toggle('dsu-dark', wantsDark()) }
+  applyTheme()
+  // 实时跟随：动画播到一半切换系统主题也立即重绘
+  // A replay can start a second run without the previous one finishing (the
+  // re-entrancy guard replaces the public API with no-ops), so clear any
+  // listener left by the previous run here instead of relying on finish().
+  if (typeof window.__HBS_THEME_CLEANUP__ === 'function') {
+    try { window.__HBS_THEME_CLEANUP__() } catch (e) {}
+  }
+  if (osDarkQuery) {
+    var onSchemeChange = function () { if (C.theme === 'auto') applyTheme() }
+    if (typeof osDarkQuery.addEventListener === 'function') osDarkQuery.addEventListener('change', onSchemeChange)
+    else if (typeof osDarkQuery.addListener === 'function') osDarkQuery.addListener(onSchemeChange)
+    themeCleanup = function () {
+      if (!osDarkQuery) return
+      if (typeof osDarkQuery.removeEventListener === 'function') osDarkQuery.removeEventListener('change', onSchemeChange)
+      else if (typeof osDarkQuery.removeListener === 'function') osDarkQuery.removeListener(onSchemeChange)
+      themeCleanup = null
+      window.__HBS_THEME_CLEANUP__ = null
+    }
+    window.__HBS_THEME_CLEANUP__ = themeCleanup
+  }
   root.style.setProperty('--dsu-speed', String(C.speed))
   root.style.setProperty('--dsu-accent', C.accent)
   root.style.setProperty('--dsu-glitch-a', C.glitchA)
@@ -591,6 +622,7 @@ function runSplash() {
   /* ── 时间线引擎 ───────────────────────────────────────────────────────── */
   var timers = []
   var escHandler = null
+  var themeCleanup = null
   var waiters = []
   var skipped = false
   var finished = false
@@ -1411,6 +1443,7 @@ function runSplash() {
       document.removeEventListener('keydown', escHandler, true)
       escHandler = null
     }
+    if (themeCleanup) themeCleanup()
     if (clockTimer) { clearInterval(clockTimer); clockTimer = null }
     try {
       if (C.mode === 'session') window.sessionStorage.setItem('hermes-startup-screen:shown', '1')
@@ -1802,7 +1835,11 @@ function AppearanceCard() {
           jsx(ListRow, {
             title: '主题',
             action: jsx(SegmentedControl, {
-              options: [{ id: 'light', label: '暖白' }, { id: 'dark', label: '暗色' }],
+              options: [
+                { id: 'auto', label: '跟随系统' },
+                { id: 'light', label: '暖白' },
+                { id: 'dark', label: '暗色' }
+              ],
               value: cfg.theme,
               onChange: v => set('theme', v)
             })

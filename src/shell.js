@@ -375,7 +375,11 @@ function AppearanceCard() {
           jsx(ListRow, {
             title: '主题',
             action: jsx(SegmentedControl, {
-              options: [{ id: 'light', label: '暖白' }, { id: 'dark', label: '暗色' }],
+              options: [
+                { id: 'auto', label: '跟随系统' },
+                { id: 'light', label: '暖白' },
+                { id: 'dark', label: '暗色' }
+              ],
               value: cfg.theme,
               onChange: v => set('theme', v)
             })

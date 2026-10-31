@@ -167,6 +167,20 @@ try {
     runtime.includes('stopPropagation'),
     'handlers stop propagation so the composer never sees the confirm key')
 
+  // --- 主题：auto 跟随系统，light/dark 锁定 ---
+  // 回归防线：暗色调色板一直在 CSS 里，但从未有代码给根节点加 dsu-dark 类，
+  // 启动画面因此永远是亮色。这几条钉住接线，外加「重播不泄漏监听器」。
+  assert.ok(/theme:\s*'auto'/.test(src), "theme 默认 'auto'")
+  assert.ok(/theme:\s*\['auto',\s*'light',\s*'dark'\]/.test(src), '枚举接受 auto')
+  assert.ok(src.includes('(prefers-color-scheme: dark)'), '读取系统配色')
+  assert.ok(src.includes("addEventListener('change'"), '订阅配色变化')
+  assert.ok(src.includes('__HBS_THEME_CLEANUP__'), '重入前先清旧监听')
+  assert.ok(/dsu-dark'/.test(src), '切换 dsu-dark 调色板')
+  for (const v of ['auto', 'light', 'dark']) {
+    assert.equal(mod.normalize({ theme: v }).theme, v, 'normalize 保留 ' + v)
+  }
+  assert.equal(mod.normalize({ theme: 'bogus' }).theme, 'auto', '非法值回落 auto')
+
   console.log('SMOKE OK — normalize/shouldPlay/register/capture-keys 全部断言通过')
 } finally {
   fs.rmSync(tmp, { force: true })

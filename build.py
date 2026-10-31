@@ -83,7 +83,7 @@ const TEXT_KEYS = [
 const COLOR_KEYS = ['accent', 'glitchA', 'glitchB']
 const ENUMS = {
   mode: ['always', 'session', 'daily'],
-  theme: ['light', 'dark'],
+  theme: ['auto', 'light', 'dark'],
   voiceLang: ['en', 'zh', 'both'],
   sfx: ['audio', 'synth'],
   voiceSource: ['asset', 'tts']
